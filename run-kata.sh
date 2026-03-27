@@ -4,7 +4,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
-MODEL="glm-4.7-flash"
+MODEL="minimax/minimax-m2.5"
 
 MAX_ROUNDS=3
 ROUND=1
@@ -14,7 +14,7 @@ run_agent() {
   local prompt="$2"
   local logfile="$3"
   echo "$label"
-  pi -p "$prompt" --provider ollama --model "$MODEL" 2>&1 | tee "$logfile"
+  pi -p "$prompt" --provider openrouter --model "$MODEL" 2>&1 | tee "$logfile"
 }
 
 verify() {

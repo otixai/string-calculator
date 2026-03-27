@@ -1,4 +1,4 @@
-const { add, getCalledCount, resetCallCount } = import('../src/index.js');
+const { add, getCalledCount, resetCallCount } = require('../src/index.js');
 
 describe('String Calculator', () => {
     describe('1. Empty string → 0', () => {

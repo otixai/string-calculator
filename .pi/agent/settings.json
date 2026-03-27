@@ -1,4 +1,4 @@
 {
-  "defaultProvider": "openrouter",
-  "defaultModel": "qwen3-coder:30b"
+  "defaultProvider": "ollama",
+  "defaultModel": "glm-4.7-flash"
 }

@@ -1,82 +1,97 @@
+'use strict';
+
+const MAX_NUMBER = 1000;
+
 let callCount = 0;
 
 function add(numbers) {
-    callCount++;
+    callCount = callCount + 1;
     
     if (numbers === "") {
         return 0;
     }
     
+    const { processedNumbers } = parseAndProcessNumbers(numbers);
+    
+    const result = processValidNumbers(processedNumbers);
+    
+    if (result.negatives.length > 0) {
+        throw new Error(`negative numbers not allowed: ${result.negatives.join(",")}`);
+    }
+    
+    return result.sum;
+}
+
+function parseAndProcessNumbers(numbers) {
     let numStrings = numbers;
-    let customDelimiters = [",", "\n"];
+    const customDelimiters = [",", "\n"];
     
-    // Check for custom delimiter syntax
     if (numbers.startsWith("//")) {
-        const delimiterEndIndex = numbers.indexOf("\n");
-        if (delimiterEndIndex === -1) {
-            throw new Error("Invalid delimiter format");
-        }
-        const delimiterSection = numbers.substring(2, delimiterEndIndex);
-        customDelimiters = [];
-        
-        // Handle cases like: ; , %,
-        const splitDelimiters = delimiterSection.split("][");
-        
-        for (let delimiter of splitDelimiters) {
-            if (delimiter.startsWith("[") && delimiter.endsWith("]")) {
-                // Multi-char delimiter like [***]
-                const inner = delimiter.substring(1, delimiter.length - 1);
-                customDelimiters.push(inner);
-            } else if (delimiter.startsWith("[") && !delimiter.endsWith("]")) {
-                // Special case: could be a single char like [*] or incomplete
-                const inner = delimiter.substring(1);
-                customDelimiters.push(inner);
-            } else if (!delimiter.startsWith("[") && delimiter.endsWith("]")) {
-                // Special case: could be malformed
-                const inner = delimiter.substring(0, delimiter.length - 1);
-                customDelimiters.push(inner);
+        const { numStrings: newNumStrings, delimiters } = parseCustomDelimiters(numbers);
+        numStrings = newNumStrings;
+        delimiters.forEach(d => customDelimiters.push(d));
+    }
+    
+    const processedNumbers = replaceDelimiters(numStrings, customDelimiters);
+    return { processedNumbers, customDelimiters };
+}
+
+function parseCustomDelimiters(numbers) {
+    const delimiterEndIndex = numbers.indexOf("\n");
+    if (delimiterEndIndex === -1) {
+        throw new Error("Invalid delimiter format");
+    }
+    
+    const delimiterSection = numbers.substring(2, delimiterEndIndex);
+    const delimiters = [...parseDelimiters(delimiterSection)];
+    
+    return { delimiterEndIndex, numStrings: numbers.substring(delimiterEndIndex + 1), delimiters };
+}
+
+function parseDelimiters(delimiterSection) {
+    const delimiters = [];
+    const splitDelimiters = delimiterSection.split("][");
+    
+    splitDelimiters.forEach(delimiter => {
+        if (delimiter.startsWith("[") && delimiter.endsWith("]")) {
+            if (delimiter.length === 2) {
+                delimiters.push(delimiter[1]);
             } else {
-                // Single char delimiters like ;,% or *?
-                for (let char of delimiter) {
-                    customDelimiters.push(char);
-                }
+                delimiters.push(delimiter.substring(1, delimiter.length - 1));
             }
+        } else {
+            delimiter.split("").forEach(char => delimiters.push(char));
         }
-        
-        numStrings = numbers.substring(delimiterEndIndex + 1);
-    }
+    });
     
-    // Replace all custom delimiters with comma for parsing
-    let processedNumbers = numStrings;
-    for (let delimiter of customDelimiters) {
+    return delimiters;
+}
+
+function replaceDelimiters(numStrings, customDelimiters) {
+    return customDelimiters.reduce((text, delimiter) => {
         const escapedDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escapedDelimiter, 'g');
-        processedNumbers = processedNumbers.replace(regex, ",");
-    }
+        return text.replace(new RegExp(escapedDelimiter, 'g'), ",");
+    }, numStrings);
+}
+
+function processValidNumbers(numbers) {
+    const splits = numbers.split(",");
+    let sum = 0;
+    const negatives = [];
     
-    // Split and convert to numbers
-    const splits = processedNumbers.split(",");
-    const arr = [];
-    let negatives = [];
-    
-    for (let i = 0; i < splits.length; i++) {
-        const num = parseInt(splits[i]);
-        if (isNaN(num)) {
-            continue;
-        }
+    splits.forEach(numStr => {
+        const num = parseInt(numStr, 10);
+        
+        if (isNaN(num)) return;
+        
         if (num < 0) {
             negatives.push(num);
+        } else if (num <= MAX_NUMBER) {
+            sum += num;
         }
-        if (num <= 1000) {
-            arr.push(num);
-        }
-    }
+    });
     
-    if (negatives.length > 0) {
-        throw new Error(`negative numbers not allowed: ${negatives.join(",")}`);
-    }
-    
-    return arr.reduce((sum, num) => sum + num, 0);
+    return { sum, negatives };
 }
 
 function getCalledCount() {

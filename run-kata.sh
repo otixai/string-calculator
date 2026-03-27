@@ -4,7 +4,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
-MODEL="glm-4.7-flash:latest"
+MODEL="glm-4.7-flash"
 
 MAX_ROUNDS=3
 ROUND=1
